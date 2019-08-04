@@ -1,0 +1,101 @@
+<html>
+
+<head>
+
+    <head>
+        <title>Getting Started with StackML</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+            integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://stackml.com/library-js/stackml.min.js"></script>
+    </head>
+
+<body>
+    <h1>Choose Image for face detection</h1>
+    <input accept="image/*" id="raised-button-file" type="file" name="myInput" />
+    <button type="button" id="predict" class="btn btn-secondary">
+        Predict
+    </button>
+    <div class="row">
+    </div>
+        <p id="result"></p>
+    <canvas id="myCanvas" style="height:100%;width:100%">
+        <img src="#" crossorigin="anonymous" id="image">
+    </canvas>
+</body>
+<script>
+    $('input[name=myInput]').change(function (e) {
+        $( ".row" ).append($('#image')
+                .attr('src', e.target.result).css({"height":"100%","width":"100%"}));
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            $('#image')
+                .attr('src', e.target.result)
+                .width(150)
+                .height(200)
+                .position('absolute');
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
+
+    $('#predict').click(function (e) {
+        callStackML();
+    });   
+
+    function drawShape(results) {
+
+        // get the canvas element using the DOM
+        var canvas = document.getElementById('myCanvas');
+
+        //returns expression
+        var express = results.outputs[0].expressions.reduce(function (prev, current) {
+            return (prev.probability > current.probability) ? prev : current
+        });
+
+        $("p").html(`Expression of face is ${express.expression} and it's probablity is ${express.probability}`)
+        var emojiPath = `/Users/gurukiransd/Desktop/stackML/emojis/${express.expression}.jpg`
+
+        if (canvas.getContext) {
+            // use getContext to use the canvas for drawing
+            var ctx = canvas.getContext('2d');
+
+            // Draw shapes
+            var img = new Image();
+            img.src = emojiPath;
+            img.onload = function () {
+                ctx.drawImage(img, results.outputs[0].detection.box.x, results.outputs[0].detection.box.y,
+                    results.outputs[0].detection.box.width, results.outputs[0].detection.box.height);
+            }
+        } else {
+            alert('Your browswer does not support canvas');
+        }
+    }
+
+    async function callStackML() {
+        //provide the access key
+        await stackml.init({
+            'accessKeyId': '045d07c53f2f313791c8b04dff37bc41'
+        });
+
+        const model = await stackml.faceExpression(callbackLoad);
+
+        // make prediction with the image
+        model.detect(document.getElementById('image'), callbackPredict);
+
+        function callbackLoad() {
+            console.log('callback after face landmark detection model is loaded!');
+        }
+
+        // callback after prediction
+        function callbackPredict(err, results) {
+            console.log(results);
+
+            // draw output keypoints in the image
+            model.draw(document.getElementById('myCanvas'), document.getElementById('image'), drawShape(
+                results));
+        }
+
+    }
+</script>
+
+</html>
