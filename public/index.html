@@ -1,5 +1,4 @@
-<html>
-
+<!DOCTYPE html>
 <head>
 
     <head>
@@ -53,7 +52,7 @@
         });
 
         $("p").html(`Expression of face is ${express.expression} and it's probablity is ${express.probability}`)
-        var emojiPath = `/Users/gurukiransd/Desktop/stackML/emojis/${express.expression}.jpg`
+        var emojiPath = `${express.expression}.jpg`
 
         if (canvas.getContext) {
             // use getContext to use the canvas for drawing
